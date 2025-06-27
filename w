@@ -30,14 +30,12 @@ function Library:CreateWindow(opts)
 
     local frame = Instance.new("Frame", gui)
     frame.Size = opts.Size or UDim2.new(0, 400, 0, 300)
-    frame.Position = opts.Center
-        and UDim2.new(0.5, -(opts.Size and opts.Size.X.Offset/2 or 200), 0.5, -150)
-        or (opts.Position or UDim2.new(0, 50, 0, 50))
+    frame.Position = (opts.Center and UDim2.new(0.5, -(frame.Size.X.Offset/2), 0.5, -frame.Size.Y.Offset/2)) or (opts.Position or UDim2.new(0, 50, 0, 50))
     frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     frame.BackgroundTransparency = 0.15
     frame.BorderSizePixel = 0
 
-    local dragInput, dragStart, startPos
+    local dragStart, startPos
     local function update(input)
         local delta = input.Position - dragStart
         frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
@@ -92,16 +90,6 @@ function Library:CreateWindow(opts)
         btn.TextColor3 = Color3.fromRGB(200, 200, 200)
         btn.BackgroundTransparency = 1
         btn.AutoButtonColor = false
-        function btn:Activate()
-            for _, t in ipairs(win.Tabs) do
-                t.Button.TextColor3 = Color3.fromRGB(200, 200, 200)
-                t.Page.Visible = false
-            end
-            self.TextColor3 = Color3.fromRGB(255, 255, 255)
-            self.Page.Visible = true
-        end
-        btn.activate = btn.Activate
-        btn.Activated:Connect(function() btn:Activate() end)
 
         local page = Instance.new("Frame", frame)
         page.Size = UDim2.new(1, 0, 1, -30)
@@ -109,6 +97,14 @@ function Library:CreateWindow(opts)
         page.BackgroundTransparency = 1
         page.Visible = false
 
+        btn.Activated:Connect(function()
+            for _, t in ipairs(win.Tabs) do
+                t.Button.TextColor3 = Color3.fromRGB(200, 200, 200)
+                t.Page.Visible = false
+            end
+            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            page.Visible = true
+        end)
         table.insert(win.Tabs, { Button = btn, Page = page })
         if #win.Tabs == 1 then btn:Activate() end
 
@@ -138,46 +134,44 @@ function Library:CreateWindow(opts)
                     return setmetatable({ Frame = container }, { __index = function(_, m)
                         if m == "AddToggle" then
                             return function(_, id, opts)
-                                local btn = Instance.new("TextButton", container)
-                                btn.Size = UDim2.new(1, 0, 0, 24)
-                                btn.Position = UDim2.new(0, 0, 0, #container:GetChildren() * 26)
-                                btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-                                btn.BorderSizePixel = 0
-                                btn.Font = Enum.Font.GothamBold
-                                btn.TextSize = 16
-                                btn.TextXAlignment = Enum.TextXAlignment.Left
-                                btn.Text = opts.Text or id
-
+                                local tbtn = Instance.new("TextButton", container)
+                                tbtn.Size = UDim2.new(1, 0, 0, 24)
+                                tbtn.Position = UDim2.new(0, 0, 0, #container:GetChildren() * 26)
+                                tbtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+                                tbtn.BorderSizePixel = 0
+                                tbtn.Font = Enum.Font.GothamBold
+                                tbtn.TextSize = 16
+                                tbtn.TextXAlignment = Enum.TextXAlignment.Left
+                                tbtn.Text = opts.Text or id
                                 local state = opts.Default or false
                                 local listeners = {}
-                                function btn:Update(v)
+                                function tbtn:Update(v)
                                     state = v
-                                    btn.TextColor3 = v and Color3.fromRGB(120, 255, 120) or Color3.fromRGB(255, 100, 100)
+                                    tbtn.TextColor3 = v and Color3.fromRGB(120, 255, 120) or Color3.fromRGB(255, 100, 100)
                                     for _, f in ipairs(listeners) do f(state) end
                                 end
-                                function btn:OnChanged(f) table.insert(listeners, f) end
-
-                                btn.Activated:Connect(function()
-                                    btn:Update(not state)
+                                function tbtn:OnChanged(f) table.insert(listeners, f) end
+                                tbtn.Activated:Connect(function()
+                                    tbtn:Update(not state)
                                     if opts.Callback then opts.Callback(state) end
                                 end)
-                                btn:Update(state)
-                                Library.Toggles[id] = btn
-                                return btn
+                                tbtn:Update(state)
+                                Library.Toggles[id] = tbtn
+                                return tbtn
                             end
                         elseif m == "AddButton" then
                             return function(_, opts)
-                                local btn = Instance.new("TextButton", container)
-                                btn.Size = UDim2.new(1, 0, 0, 24)
-                                btn.Position = UDim2.new(0, 0, 0, #container:GetChildren() * 26)
-                                btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-                                btn.BorderSizePixel = 0
-                                btn.Font = Enum.Font.GothamBold
-                                btn.TextSize = 16
-                                btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-                                btn.Text = opts.Text or "Button"
-                                btn.Activated:Connect(function() if opts.Func then opts.Func() end end)
-                                return btn
+                                local bbtn = Instance.new("TextButton", container)
+                                bbtn.Size = UDim2.new(1, 0, 0, 24)
+                                bbtn.Position = UDim2.new(0, 0, 0, #container:GetChildren() * 26)
+                                bbtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+                                bbtn.BorderSizePixel = 0
+                                bbtn.Font = Enum.Font.GothamBold
+                                bbtn.TextSize = 16
+                                bbtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                                bbtn.Text = opts.Text or "Button"
+                                bbtn.Activated:Connect(function() if opts.Func then opts.Func() end end)
+                                return bbtn
                             end
                         end
                     end })
@@ -200,25 +194,5 @@ function Library:CreateWindow(opts)
 
     return win
 end
-end
-
--- USAGE EXAMPLE
--- place this ModuleScript in ReplicatedStorage/UI_Library
--- local UILib = require(game.ReplicatedStorage.UI_Library)
--- local Window = UILib:CreateWindow({
---     Title = "HVH Menu",
---     Center = true,
---     AutoShow = true,
---     Size = UDim2.new(0, 500, 0, 350)
--- })
---
--- local MainTab = Window:AddTab("Main")
--- local MainBox = MainTab:AddGroupbox("Main Features")
--- MainBox:AddToggle("SilentAimToggle", {
---     Text = "Silent Aim",
---     Default = true,
---     Callback = function(v) print("Silent Aim:", v) end
--- })
--- MainBox:AddButton({ Text = "Trigger", Func = function() print("Triggered") end })
 
 return Library
