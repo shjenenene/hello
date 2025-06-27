@@ -1,3 +1,4 @@
+-- UI Library Module
 local Library = {}
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
@@ -33,7 +34,31 @@ function Library:CreateWindow(opts)
         and UDim2.new(0.5, -(opts.Size and opts.Size.X.Offset/2 or 200), 0.5, -150)
         or (opts.Position or UDim2.new(0, 50, 0, 50))
     frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    frame.BackgroundTransparency = 0.15
     frame.BorderSizePixel = 0
+
+    local dragInput, dragStart, startPos
+    local function update(input)
+        local delta = input.Position - dragStart
+        frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
+                                   startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragStart = input.Position
+            startPos = frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragStart = nil
+                end
+            end)
+        end
+    end)
+    frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement and dragStart then
+            update(input)
+        end
+    end)
 
     local stroke = Instance.new("UIStroke", frame)
     stroke.Color = Color3.fromRGB(60, 60, 60)
@@ -67,6 +92,16 @@ function Library:CreateWindow(opts)
         btn.TextColor3 = Color3.fromRGB(200, 200, 200)
         btn.BackgroundTransparency = 1
         btn.AutoButtonColor = false
+        function btn:Activate()
+            for _, t in ipairs(win.Tabs) do
+                t.Button.TextColor3 = Color3.fromRGB(200, 200, 200)
+                t.Page.Visible = false
+            end
+            self.TextColor3 = Color3.fromRGB(255, 255, 255)
+            self.Page.Visible = true
+        end
+        btn.activate = btn.Activate
+        btn.Activated:Connect(function() btn:Activate() end)
 
         local page = Instance.new("Frame", frame)
         page.Size = UDim2.new(1, 0, 1, -30)
@@ -74,16 +109,6 @@ function Library:CreateWindow(opts)
         page.BackgroundTransparency = 1
         page.Visible = false
 
-        function btn:Activate()
-            for _, t in ipairs(win.Tabs) do
-                t.Button.TextColor3 = Color3.fromRGB(200, 200, 200)
-                t.Page.Visible = false
-            end
-            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            page.Visible = true
-        end
-
-        btn.Activated:Connect(function() btn:Activate() end)
         table.insert(win.Tabs, { Button = btn, Page = page })
         if #win.Tabs == 1 then btn:Activate() end
 
@@ -175,4 +200,25 @@ function Library:CreateWindow(opts)
 
     return win
 end
+end
+
+-- USAGE EXAMPLE
+-- place this ModuleScript in ReplicatedStorage/UI_Library
+-- local UILib = require(game.ReplicatedStorage.UI_Library)
+-- local Window = UILib:CreateWindow({
+--     Title = "HVH Menu",
+--     Center = true,
+--     AutoShow = true,
+--     Size = UDim2.new(0, 500, 0, 350)
+-- })
+--
+-- local MainTab = Window:AddTab("Main")
+-- local MainBox = MainTab:AddGroupbox("Main Features")
+-- MainBox:AddToggle("SilentAimToggle", {
+--     Text = "Silent Aim",
+--     Default = true,
+--     Callback = function(v) print("Silent Aim:", v) end
+-- })
+-- MainBox:AddButton({ Text = "Trigger", Func = function() print("Triggered") end })
+
 return Library
