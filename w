@@ -1,5 +1,5 @@
+
 -- UI Library Module
-print("2")
 local Library = {}
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
@@ -98,18 +98,21 @@ function Library:CreateWindow(opts)
         page.BackgroundTransparency = 1
         page.Visible = false
 
-        btn.Activated:Connect(function()
+        function btn.Activate()
             for _, t in ipairs(win.Tabs) do
                 t.Button.TextColor3 = Color3.fromRGB(200, 200, 200)
                 t.Page.Visible = false
             end
             btn.TextColor3 = Color3.fromRGB(255, 255, 255)
             page.Visible = true
-        end)
+        end
+        btn.Activated:Connect(btn.Activate)
+
         table.insert(win.Tabs, { Button = btn, Page = page })
         if #win.Tabs == 1 then btn:Activate() end
 
         return setmetatable({ Page = page }, { __index = function(_, k)
+({ Page = page }, { __index = function(_, k)
             if k == "AddGroupbox" then
                 return function(_, title)
                     local gb = Instance.new("Frame", page)
@@ -196,4 +199,4 @@ function Library:CreateWindow(opts)
     return win
 end
 
-return Library
+return Library and print("params")
